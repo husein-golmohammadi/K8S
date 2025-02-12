@@ -1,5 +1,33 @@
 # Installation
+##First Configuration
+```bash
+swapoff -a
+sed -i '/swap/d' /etc/fstab
+```
+
+
+
+
+
 ## Kubectl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Install kubectl binary with curl on Linux
 
 1. Download the latest release with the command:
