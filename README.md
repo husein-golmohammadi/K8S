@@ -1,6 +1,6 @@
 # Installation
 
-##First Configuration
+## First Configuration
 Disable swapp
 ```bash
 swapoff -a
