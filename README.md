@@ -65,6 +65,11 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
+## Network Installation (CNI)
+Install Calico
+```bash
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+```
 
 ## Add worker nodes to the cluster
 For each worker node, execute the kubeadm join command that you received from the master
@@ -73,12 +78,6 @@ sudo kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-has
 ```
 ```bash
 export KUBECONFIG=/etc/kubernetes/admin.conf
-```
-
-## Network Installation (CNI)
-Install Calico
-```bash
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
 ## Testing and checking nodes
