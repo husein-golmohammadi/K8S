@@ -25,7 +25,7 @@ EOF
 sysctl --system
 ```
 
-## Install container 
+## Install containerd
 ```bash
 sudo apt update -y
 sudo apt install -y containerd
