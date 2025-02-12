@@ -25,7 +25,7 @@ EOF
 sysctl --system
 ```
 
-##Install container 
+## Install container 
 ```bash
 sudo apt update -y
 sudo apt install -y containerd
@@ -39,7 +39,7 @@ sudo systemctl restart containerd
 sudo systemctl enable containerd
 ```
 
-##Install kubeadm, kubectl, kubelet
+## Install kubeadm, kubectl, kubelet
 Add a Kubernetes repository
 ```bash
 sudo apt install -y apt-transport-https ca-certificates curl
@@ -54,7 +54,7 @@ sudo apt install -y kubelet kubeadm kubectl
 sudo systemctl enable kubelet
 ```
 
-##Creating a Kubernetes cluster with kubeadm
+## Creating a Kubernetes cluster with kubeadm
 on the master node
 ```bash
 sudo kubeadm init --pod-network-cidr=10.154.0.0/16 --control-plane-endpoint=$(hostname -I | awk '{print $1}') --upload-certs
@@ -66,7 +66,7 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-##Add worker nodes to the cluster
+## Add worker nodes to the cluster
 For each worker node, execute the kubeadm join command that you received from the master
 ```bash
 sudo kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
@@ -75,12 +75,12 @@ sudo kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-has
 export KUBECONFIG=/etc/kubernetes/admin.conf
 ```
 
-##Network Installation (CNI)
+## Network Installation (CNI)
 Install Calico
 ```bash
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
-##Testing and checking nodes
+## Testing and checking nodes
 kubectl get nodes
 kubectl get pods -A
