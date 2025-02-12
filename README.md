@@ -1,99 +1,85 @@
 # Installation
 ##First Configuration
+Disable swapp
 ```bash
 swapoff -a
 sed -i '/swap/d' /etc/fstab
 ```
-
-
-
-
-
-## Kubectl
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Install kubectl binary with curl on Linux
-
-1. Download the latest release with the command:
-
+Set sysctl to enable networking
 ```bash
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+modprobe overlay
+modprobe br_netfilter
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sysctl --system
 ```
 
-2. Install kubectl
-
+##Install container 
 ```bash
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+sudo apt update -y
+sudo apt install -y containerd
+```
+Configuring containerd to work with Kubernetes
+```bash
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo systemctl enable containerd
 ```
 
-3. Install using native package management 
-
+##Install kubeadm, kubectl, kubelet
+Add a Kubernetes repository
 ```bash
-sudo apt-get update
-# apt-transport-https may be a dummy package; if so, you can skip that package
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-
-
-#If the folder `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
-#sudo mkdir -p -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+sudo apt install -y apt-transport-https ca-certificates curl
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo tee /etc/apt/keyrings/kubernetes-apt-keyring.asc
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
+Installing Kubernetes tools
+```bash
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
+sudo systemctl enable kubelet
 ```
 
+##Creating a Kubernetes cluster with kubeadm
+on the master node
 ```bash
-#This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list   # helps tools such as command-not-found to work correctly
+sudo kubeadm init --pod-network-cidr=10.154.0.0/16 --control-plane-endpoint=$(hostname -I | awk '{print $1}') --upload-certs
+```
+After finishing the command, it will say that you should type the following commands
+‍‍‍‍‍```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-4. Update apt package index, then install kubectl:
+##Add worker nodes to the cluster
+For each worker node, execute the kubeadm join command that you received from the master
+```bash
+sudo kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+```bash
+export KUBECONFIG=/etc/kubernetes/admin.conf
+```
 
+##Network Installation (CNI)
+Install Calico
 ```bash
-sudo apt-get update
-sudo apt-get install -y kubectl
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
-## Kubeadm
 
-1. Update the apt package index and install packages needed to use the Kubernetes apt repository:
-```bash
-sudo apt-get update
-#apt-transport-https may be a dummy package; if so, you can skip that package
-sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-```
-2. Download the public signing key for the Kubernetes package repositories. The same signing key is used for all repositories so you can disregard the version in the URL:
-```bash
-#If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
-#sudo mkdir -p -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-```
-3. Add the appropriate Kubernetes apt repository. Please note that this repository have packages only for Kubernetes 1.31; for other Kubernetes minor versions, you need to change the Kubernetes minor version in the URL to match your desired minor version (you should also check that you are reading the documentation for the version of Kubernetes that you plan to install).
-```bash
-#This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-```
-4. Update the apt package index, install kubelet, kubeadm and kubectl, and pin their version:
-```bash
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-```
-5. (Optional) Enable the kubelet service before running kubeadm:
-```bash
-sudo systemctl enable --now kubelet
-```
+##Testing and checking nodes
+kubectl get nodes
+kubectl get pods -A
