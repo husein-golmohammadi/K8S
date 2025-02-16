@@ -60,6 +60,7 @@ on the master node
 sudo kubeadm init --pod-network-cidr=10.154.0.0/16 --control-plane-endpoint=$(hostname -I | awk '{print $1}') --upload-certs
 ```
 After finishing the command, it will say that you should type the following commands
+
 ‍‍‍‍‍```bash
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
