@@ -59,16 +59,20 @@ on the master node
 ```bash
 sudo kubeadm init --pod-network-cidr=10.154.0.0/16 --control-plane-endpoint=$(hostname -I | awk '{print $1}') --upload-certs
 ```
+
 After finishing the command, it will say that you should type the following commands
 
-‍‍‍‍‍```bash
+``` bash
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
+
 ## Network Installation (CNI)
+
 Install Calico
-```bash
+
+``` bash
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
