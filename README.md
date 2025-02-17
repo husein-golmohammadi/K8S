@@ -69,7 +69,7 @@ chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 ## Network Installation (CNI)
-
+on the master node
 Install Calico
 
 ``` bash
