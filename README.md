@@ -86,5 +86,7 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 ```
 
 ## Testing and checking nodes
+```bash
 kubectl get nodes
 kubectl get pods -A
+```
